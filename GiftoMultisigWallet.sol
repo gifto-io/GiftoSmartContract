@@ -1,4 +1,4 @@
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------------------------
 // Gifto Token by Gifto Limited.
@@ -55,7 +55,14 @@ contract Gifto is ERC20Interface {
     // _icoSupply is the avalable unit. Initially, it is _totalSupply
     uint public _icoSupply = _totalSupply * _icoPercent / 100;
     
-    /* Functions with this modifier can only be executed by the owner
+    // minimum buy 0.1 ETH
+    uint public _minimumBuy = 10 ** 17;
+    
+    // maximum buy 30 ETH
+    uint public _maximumBuy = 30 * 10 ** 18;
+    
+    /**
+     * Functions with this modifier can only be executed by the owner
      */
     modifier onlyOwner() {
         if (msg.sender != owner) {
@@ -64,7 +71,8 @@ contract Gifto is ERC20Interface {
         _;
     }
 
-    /* Functions with this modifier can only be executed by users except owners
+    /**
+     * Functions with this modifier can only be executed by users except owners
      */
     modifier onlyNotOwner() {
         if (msg.sender == owner) {
@@ -73,7 +81,8 @@ contract Gifto is ERC20Interface {
         _;
     }
 
-    /* Functions with this modifier check on sale status
+    /**
+     * Functions with this modifier check on sale status
      * Only allow sale if _selling is on
      */
     modifier onSale() {
@@ -83,7 +92,8 @@ contract Gifto is ERC20Interface {
         _;
     }
 
-    /* Functions with this modifier check the validity of original buy price
+    /**
+     * Functions with this modifier check the validity of original buy price
      */
     modifier validOriginalBuyPrice() {
         if(_originalBuyPrice <= 0) {
@@ -91,9 +101,26 @@ contract Gifto is ERC20Interface {
         }
         _;
     }
-
+    
+    /**
+     * Functions with this modifier check the validity of address is investor
+     */
     modifier validInvestor() {
         if(approvedInvestorList[msg.sender] == false){
+            revert();
+        }
+        _;
+    }
+    
+    /**
+     * Functions with this modifier check the validity of msg value
+     * value must greater than equal minimumBuyPrice
+     * total deposit must less than equal maximumBuyPrice
+     */
+    modifier validValue(){
+        // if value < _minimumBuy OR total deposit of msg.sender > maximumBuyPrice
+        if ( (msg.value < _minimumBuy) ||
+             ((deposit[msg.sender] + msg.value) > _maximumBuy) ){
             revert();
         }
         _;
@@ -102,8 +129,9 @@ contract Gifto is ERC20Interface {
     /// @dev Fallback function allows to buy ether.
     function()
         public
-        payable {
-        // check if sender already bought
+        payable
+        validValue {
+        // check the first buy => push to Array
         if (deposit[msg.sender] == 0 && msg.value != 0){
             // add new buyer to List
             buyers.push(msg.sender);
@@ -136,6 +164,24 @@ contract Gifto is ERC20Interface {
         returns (bool){
         _icoPercent = newIcoPercent;
         _icoSupply = _totalSupply * _icoPercent / 100;
+    }
+    
+    /// @dev set new _minimumBuy
+    /// @param newMinimumBuy new value of _minimumBuy
+    function setMinimumBuy(uint256 newMinimumBuy)
+        public 
+        onlyOwner
+        returns (bool){
+        _minimumBuy = newMinimumBuy;
+    }
+    
+    /// @dev set new _maximumBuy
+    /// @param newMaximumBuy new value of _maximumBuy
+    function setMaximumBuy(uint256 newMaximumBuy)
+        public 
+        onlyOwner
+        returns (bool){
+        _maximumBuy = newMaximumBuy;
     }
  
     /// @dev Gets account's balance
@@ -196,8 +242,32 @@ contract Gifto is ERC20Interface {
         return filterBuyers(false);
     }
     
+    /// @dev get ETH deposit
+    /// @param _addr address get deposit
+    /// @return amount deposit of an buyer
+    function getDeposit(address _addr)
+        public
+        constant
+        returns(uint256){
+        return deposit[_addr];
+    }
+    
+    /// @dev get total deposit of buyers
+    /// @return amount ETH deposit
+    function getTotalDeposit()
+        public
+        constant
+        returns(uint256 totalDeposit){
+        totalDeposit = 0;
+        for (uint i = 0; i < buyers.length; i++){
+            totalDeposit += deposit[buyers[i]];
+        }
+    }
+    
     /// @dev delivery token for buyer
     /// @param isInvestor transfer token for investor or not
+    ///         true: investors
+    ///         false: not investors
     function deliveryToken(bool isInvestor)
         public
         onlyOwner
@@ -211,7 +281,7 @@ contract Gifto is ERC20Interface {
                 //check requestedUnits > _icoSupply
                 if(requestedUnits < _icoSupply && requestedUnits > 0 ){
                     // prepare transfer data
-                    //NOTE: make sure balances owner greater than _icoSupply
+                    // NOTE: make sure balances owner greater than _icoSupply
                     balances[owner] -= requestedUnits;
                     balances[buyers[i]] += requestedUnits;
                     _icoSupply -= requestedUnits;
@@ -219,12 +289,30 @@ contract Gifto is ERC20Interface {
                     // submit transfer
                     Transfer(owner, buyers[i], requestedUnits);
                     
+                    // reset deposit of buyer
                     uint256 ETHbalance = deposit[buyers[i]];
                     deposit[buyers[i]] = 0;
                     
                     //transfer ETH to owner
                     owner.transfer(ETHbalance);
                 }
+            }
+        }
+    }
+    
+    /// @dev return ETH for normal buyers
+    function returnETHforNormalBuyers()
+        public
+        onlyOwner{
+        for(uint i = 0; i < buyers.length; i++){
+            // buyer not approve investor
+            if (!approvedInvestorList[buyers[i]]) {
+                // get deposit of buyer
+                uint256 buyerDeposit = deposit[buyers[i]];
+                // reset deposit of buyer
+                deposit[buyers[i]] = 0;
+                // return deposit amount for buyer
+                buyers[i].transfer(buyerDeposit);
             }
         }
     }
@@ -276,7 +364,8 @@ contract Gifto is ERC20Interface {
 
     /// @dev Updates buy price (owner ONLY)
     /// @param newBuyPrice New buy price (in unit)
-    function setBuyPrice(uint newBuyPrice) onlyOwner 
+    function setBuyPrice(uint newBuyPrice) 
+        onlyOwner 
         public {
         _originalBuyPrice = newBuyPrice;
     }
@@ -342,9 +431,7 @@ contract Gifto is ERC20Interface {
     }
 }
 
-
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
-
 contract MultiSigWallet {
 
     event Confirmation(address sender, bytes32 transactionId);

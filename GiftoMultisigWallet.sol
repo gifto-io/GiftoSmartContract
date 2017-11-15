@@ -65,9 +65,7 @@ contract Gifto is ERC20Interface {
      * Functions with this modifier can only be executed by the owner
      */
     modifier onlyOwner() {
-        if (msg.sender != owner) {
-            revert();
-        }
+        require(msg.sender == owner);
         _;
     }
 
@@ -75,9 +73,7 @@ contract Gifto is ERC20Interface {
      * Functions with this modifier can only be executed by users except owners
      */
     modifier onlyNotOwner() {
-        if (msg.sender == owner) {
-            revert();
-        }
+        require(msg.sender != owner);
         _;
     }
 
@@ -86,9 +82,7 @@ contract Gifto is ERC20Interface {
      * Only allow sale if _selling is on
      */
     modifier onSale() {
-        if (!_selling || (_icoSupply <= 0) ) { 
-            revert();
-        }
+        require(_selling && (_icoSupply > 0) );
         _;
     }
 
@@ -96,9 +90,7 @@ contract Gifto is ERC20Interface {
      * Functions with this modifier check the validity of original buy price
      */
     modifier validOriginalBuyPrice() {
-        if(_originalBuyPrice <= 0) {
-            revert();
-        }
+        require(_originalBuyPrice > 0);
         _;
     }
     
@@ -106,9 +98,7 @@ contract Gifto is ERC20Interface {
      * Functions with this modifier check the validity of address is investor
      */
     modifier validInvestor() {
-        if(approvedInvestorList[msg.sender] == false){
-            revert();
-        }
+        require(approvedInvestorList[msg.sender]);
         _;
     }
     
@@ -119,10 +109,8 @@ contract Gifto is ERC20Interface {
      */
     modifier validValue(){
         // if value < _minimumBuy OR total deposit of msg.sender > maximumBuyPrice
-        if ( (msg.value < _minimumBuy) ||
-             ((deposit[msg.sender] + msg.value) > _maximumBuy) ){
-            revert();
-        }
+        require ( (msg.value >= _minimumBuy) &&
+                ( (deposit[msg.sender] + msg.value) <= _maximumBuy) );
         _;
     }
 
@@ -145,6 +133,7 @@ contract Gifto is ERC20Interface {
         public {
         owner = msg.sender;
         balances[owner] = _totalSupply;
+        Transfer(0x0, owner, _totalSupply);
     }
     
     /// @dev Gets totalSupply
@@ -272,6 +261,9 @@ contract Gifto is ERC20Interface {
         public
         onlyOwner
         validOriginalBuyPrice {
+        //sumary deposit of investors
+        uint256 sum = 0;
+        
         for (uint i = 0; i < buyers.length; i++){
             if(approvedInvestorList[buyers[i]] == isInvestor) {
                 
@@ -279,7 +271,7 @@ contract Gifto is ERC20Interface {
                 uint256 requestedUnits = deposit[buyers[i]] / _originalBuyPrice;
                 
                 //check requestedUnits > _icoSupply
-                if(requestedUnits < _icoSupply && requestedUnits > 0 ){
+                if(requestedUnits <= _icoSupply && requestedUnits > 0 ){
                     // prepare transfer data
                     // NOTE: make sure balances owner greater than _icoSupply
                     balances[owner] -= requestedUnits;
@@ -290,14 +282,13 @@ contract Gifto is ERC20Interface {
                     Transfer(owner, buyers[i], requestedUnits);
                     
                     // reset deposit of buyer
-                    uint256 ETHbalance = deposit[buyers[i]];
+                    sum += deposit[buyers[i]];
                     deposit[buyers[i]] = 0;
-                    
-                    //transfer ETH to owner
-                    owner.transfer(ETHbalance);
                 }
             }
         }
+        //transfer total ETH of investors to owner
+        owner.transfer(sum);
     }
     
     /// @dev return ETH for normal buyers
@@ -328,7 +319,7 @@ contract Gifto is ERC20Interface {
         //      and the sum is not overflow,
         // then do transfer 
         if ( (balances[msg.sender] >= _amount) &&
-             (_amount > 0) && 
+             (_amount >= 0) && 
              (balances[_to] + _amount > balances[_to]) ) {  
 
             balances[msg.sender] -= _amount;
@@ -338,7 +329,7 @@ contract Gifto is ERC20Interface {
             return true;
 
         } else {
-            return false;
+            revert();
         }
     }
 
@@ -391,7 +382,7 @@ contract Gifto is ERC20Interface {
     }
 
     /// @dev Buys Gifto
-    /// @return Amount of actual sold units 
+    /// @return Amount of requested units 
     function buy() payable
         onlyNotOwner 
         validOriginalBuyPrice

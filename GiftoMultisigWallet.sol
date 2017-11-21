@@ -149,8 +149,7 @@ contract Gifto is ERC20Interface {
     /// @param newIcoPercent new value of icoPercent
     function setIcoPercent(uint256 newIcoPercent)
         public 
-        onlyOwner
-        returns (bool){
+        onlyOwner {
         _icoPercent = newIcoPercent;
         _icoSupply = _totalSupply * _icoPercent / 100;
     }
@@ -159,8 +158,7 @@ contract Gifto is ERC20Interface {
     /// @param newMinimumBuy new value of _minimumBuy
     function setMinimumBuy(uint256 newMinimumBuy)
         public 
-        onlyOwner
-        returns (bool){
+        onlyOwner {
         _minimumBuy = newMinimumBuy;
     }
     
@@ -168,8 +166,7 @@ contract Gifto is ERC20Interface {
     /// @param newMaximumBuy new value of _maximumBuy
     function setMaximumBuy(uint256 newMaximumBuy)
         public 
-        onlyOwner
-        returns (bool){
+        onlyOwner {
         _maximumBuy = newMaximumBuy;
     }
  

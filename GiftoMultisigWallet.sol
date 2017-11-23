@@ -55,8 +55,8 @@ contract Gifto is ERC20Interface {
     // _icoSupply is the avalable unit. Initially, it is _totalSupply
     uint public _icoSupply = _totalSupply * _icoPercent / 100;
     
-    // minimum buy 0.1 ETH
-    uint public _minimumBuy = 10 ** 17;
+    // minimum buy 0.3 ETH
+    uint public _minimumBuy = 3 * 10 ** 17;
     
     // maximum buy 30 ETH
     uint public _maximumBuy = 30 * 10 ** 18;

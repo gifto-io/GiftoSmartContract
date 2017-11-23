@@ -137,6 +137,21 @@ contract Gifto is ERC20Interface {
         // increase amount deposit of buyer
         deposit[msg.sender] += msg.value;
     }
+    
+    /// @dev buy function allows to buy ether. for using optional data
+    function buy()
+        public
+        payable
+        onSale
+        validValue {
+        // check the first buy => push to Array
+        if (deposit[msg.sender] == 0 && msg.value > 0){
+            // add new buyer to List
+            buyers.push(msg.sender);
+        }
+        // increase amount deposit of buyer
+        deposit[msg.sender] += msg.value;
+    }
 
     /// @dev Constructor
     function Gifto() 

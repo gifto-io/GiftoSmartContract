@@ -139,7 +139,7 @@ contract Gifto is ERC20Interface {
     }
     
     /// @dev buy function allows to buy ether. for using optional data
-    function buy()
+    function buyGifto()
         public
         payable
         onSale
@@ -157,6 +157,7 @@ contract Gifto is ERC20Interface {
     function Gifto() 
         public {
         owner = msg.sender;
+        // buyers = new address[](1);
         balances[owner] = _totalSupply;
         Transfer(0x0, owner, _totalSupply);
     }
@@ -251,6 +252,14 @@ contract Gifto is ERC20Interface {
         constant
         returns(address[]){
         return filterBuyers(false);
+    }
+    
+    /// @dev get all buyer
+    function getAllBuyers()
+    public
+    constant
+    returns(address[]){
+        return buyers;
     }
     
     /// @dev get ETH deposit

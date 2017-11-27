@@ -126,16 +126,8 @@ contract Gifto is ERC20Interface {
     /// @dev Fallback function allows to buy ether.
     function()
         public
-        payable
-        onSale
-        validValue {
-        // check the first buy => push to Array
-        if (deposit[msg.sender] == 0 && msg.value > 0){
-            // add new buyer to List
-            buyers.push(msg.sender);
-        }
-        // increase amount deposit of buyer
-        deposit[msg.sender] += msg.value;
+        payable {
+        buyGifto();
     }
     
     /// @dev buy function allows to buy ether. for using optional data
@@ -282,6 +274,8 @@ contract Gifto is ERC20Interface {
         validRange(a, b) {
         //sumary deposit of investors
         uint256 sum = 0;
+        // make sure balances owner greater than _icoSupply
+        require(balances[owner] >= _icoSupply);
         
         for (uint i = a; i <= b; i++){
             if(approvedInvestorList[buyers[i]]) {
@@ -292,7 +286,6 @@ contract Gifto is ERC20Interface {
                 //check requestedUnits > _icoSupply
                 if(requestedUnits <= _icoSupply && requestedUnits > 0 ){
                     // prepare transfer data
-                    // NOTE: make sure balances owner greater than _icoSupply
                     balances[owner] -= requestedUnits;
                     balances[buyers[i]] += requestedUnits;
                     _icoSupply -= requestedUnits;

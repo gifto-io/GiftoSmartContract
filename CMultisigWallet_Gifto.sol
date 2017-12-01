@@ -395,38 +395,6 @@ contract Gifto is ERC20Interface {
             approvedInvestorList[investorList[i]] = false;
         }
     }
-
-    /// @dev Buys Gifto // don't need anymore
-    /// @return Amount of requested units 
-/**    function buy() payable
-        onlyNotOwner 
-        validOriginalBuyPrice
-        validInvestor
-        onSale 
-        validValue
-        public
-        returns (uint256 amount) {
-        // convert buy amount in wei to number of unit want to buy
-        uint requestedUnits = (msg.value * _originalBuyPrice) / 10**18 ;
-        
-        //check requestedUnits <= _icoSupply
-        require(requestedUnits <= _icoSupply);
-
-        // prepare transfer data
-        balances[owner] -= requestedUnits;
-        balances[msg.sender] += requestedUnits;
-        
-        // decrease _icoSupply
-        _icoSupply -= requestedUnits;
-
-        // submit transfer
-        Transfer(owner, msg.sender, requestedUnits);
-
-        //transfer ETH to owner
-        owner.transfer(msg.value);
-        
-        return requestedUnits;
-    }*/
     
     /// @dev Withdraws Ether in contract (Owner only)
     /// @return Status of withdrawal
@@ -460,6 +428,7 @@ contract MultiSigWallet {
     address[] public owners;
     uint public required;
     uint public transactionCount;
+    bool flag = true;
 
     struct Transaction {
         address destination;
@@ -806,6 +775,8 @@ contract MultiSigWallet {
         external
         onlyWallet
     {
+        require(flag == true);
         CoinCreation(new Gifto());
+        flag = false;
     }
 }

@@ -41,7 +41,7 @@ contract Gifto is ERC20Interface {
 
     bool public _selling = false;//initial not selling
     uint public _totalSupply = 10 ** 14; // total supply is 10^14 unit, equivalent to 10^9 Gifto
-    uint public _originalBuyPrice = 45 * 10**7; // original buy 1ETH = 3000 Gifto = 3 * 10**8 unit
+    uint public _originalBuyPrice = 45 * 10**7; // original buy 1ETH = 4500 Gifto = 45 * 10**7 unit
 
     // Owner of this contract
     address public owner;
@@ -205,11 +205,12 @@ contract Gifto is ERC20Interface {
         onlyOwner 
         public {
         require(newBuyPrice>0);
-        _originalBuyPrice = newBuyPrice;
-        // control _maximumBuy is 10,000 USD, Gifto price is 0.1USD
-        // proposed: 1 ETH = 300USD => 1 ETH = 3000 Gifto = _originalBuyPrice,
-        // _maximumBuy = 10,000 / 300 = 100,000 / _originalBuyPrice ~ 33 ETH
-        _maximumBuy = 100000 * 10**18 /_originalBuyPrice;
+        _originalBuyPrice = newBuyPrice; // 3000 Gifto = 3000 00000 unit
+        // control _maximumBuy_USD = 10,000 USD, Gifto price is 0.1USD
+        // maximumBuy_Gifto = 100,000 Gifto = 100,000,00000 unit
+        // 3000 Gifto = 1ETH => maximumETH = 100,000,00000 / _originalBuyPrice
+        // 100,000,00000/3000 0000 ~ 33ETH => change to wei
+        _maximumBuy = 10**18 * 10000000000 /_originalBuyPrice;
     }
         
     /// @dev Gets account's balance

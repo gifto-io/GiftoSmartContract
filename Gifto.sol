@@ -144,7 +144,7 @@ contract Gifto is ERC20Interface {
         // increase amount deposit of buyer
         deposit[msg.sender] += msg.value;
         // auto turnOffSale
-        totalTokenSold += msg.value * _originalBuyPrice / 10**18;
+        totalTokenSold += (msg.value * _originalBuyPrice) / 10**18;
         if(totalTokenSold >= _icoSupply){
             _selling = false;
         }
@@ -301,7 +301,7 @@ contract Gifto is ERC20Interface {
         }
     }
  
-    /// @dev Transfers the balance from Multisig wallet to an account
+    /// @dev Transfers the balance from msg.sender to an account
     /// @param _to Recipient address
     /// @param _amount Transfered amount in unit
     /// @return Transfer status

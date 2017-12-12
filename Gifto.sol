@@ -41,7 +41,7 @@ contract Gifto is ERC20Interface {
 
     bool public _selling = true;//initial not selling
     uint256 public _totalSupply = 10 ** 14; // total supply is 10^14 unit, equivalent to 10^9 Gifto
-    uint256 public _originalBuyPrice = 45 * 10**7; // original buy 1ETH = 4500 Gifto = 45 * 10**7 unit
+    uint256 public _originalBuyPrice = 43 * 10**7; // original buy 1ETH = 4300 Gifto = 43 * 10**7 unit
 
     // Owner of this contract
     address public owner;

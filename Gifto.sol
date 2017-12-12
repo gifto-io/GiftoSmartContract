@@ -36,7 +36,7 @@ contract ERC20Interface {
 contract Gifto is ERC20Interface {
     uint256 public constant decimals = 5;
 
-    string public constant symbol = "GIFTO";
+    string public constant symbol = "GTO";
     string public constant name = "Gifto";
 
     bool public _selling = true;//initial not selling
